@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -101,12 +100,11 @@ Auth:
 Auth-Initial:
 	[success=end default=ignore]	/usr/lib/pam_arvados.so %s testvm2.shell insecure
 `, proxyhost, proxyhost)
-	err := ioutil.WriteFile(s.tmpdir+"/conffile", []byte(confdata), 0755)
+	err := os.WriteFile(s.tmpdir+"/conffile", []byte(confdata), 0755)
 	c.Assert(err, check.IsNil)
 }
 
 func (s *DockerSuite) runTestClient(c *check.C, args ...string) (stdout, stderr *bytes.Buffer, err error) {
-
 	cmd := exec.Command("docker", append([]string{
 		"run", "--rm",
 		"--hostname", "testvm2.shell",
@@ -162,7 +160,7 @@ Auth:
 Auth-Initial:
 	[success=end default=ignore]	/usr/lib/pam_arvados.so %s - insecure debug
 `, s.proxyln.Addr().String(), s.proxyln.Addr().String())
-	err := ioutil.WriteFile(s.tmpdir+"/conffile", []byte(confdata), 0755)
+	err := os.WriteFile(s.tmpdir+"/conffile", []byte(confdata), 0755)
 	c.Assert(err, check.IsNil)
 
 	stdout, stderr, err := s.runTestClient(c, "try", "active", arvadostest.ActiveTokenV2)

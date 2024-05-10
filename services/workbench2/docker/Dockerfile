@@ -34,12 +34,25 @@ RUN cd /usr/src/arvados && \
     apt-get update && \
     go mod download && \
     go run ./cmd/arvados-server install -type test && \
-    # Installing WB2 deps persists cypress to the home folder
-    # This is convenient to running cypress locally where yarn is run outside the container
-    cd services/workbench2 && \
-    yarn install && \
-    cd /usr/src/arvados && \
-    rm -rf arvados && \
     apt-get clean
+
+# Set up sudo & docker enabled user
+RUN useradd -m -s /bin/bash testuser && \
+    usermod -aG sudo testuser && \
+    usermod -aG docker testuser
+
+# Make sure user_allow_other is set in fuse.conf
+RUN sed -i 's/#user_allow_other/user_allow_other/g' /etc/fuse.conf
+
+# preseed arvados test dependencies
+RUN cd /usr/src/arvados && \
+    pg_isready || pg_ctlcluster 13 main start && \
+    mkdir -p tmp && chown -R testuser . && \
+    su testuser -c 'mkdir -p /home/testuser/tmp && \
+        WORKSPACE=$(pwd) ./build/run-tests.sh \
+        --temp /home/testuser/tmp \
+        --only install' && \
+    cd .. && \
+    rm -rf arvados
 
 RUN git config --global --add safe.directory /usr/src/arvados

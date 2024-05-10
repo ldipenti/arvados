@@ -10,31 +10,149 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-tests
+  IMAGE_TAG: latest
+
 jobs:
-  workbench2:
-    name: Workbench2 Tests
+  build-test-docker-image:
+    name: Build Test Docker Image
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
     steps:
       - name: Checkout code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # 3.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # 5.5.1
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.IMAGE_TAG }}
       - name: Setup buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
-      - name: Build wb2 test container
+      - name: Build & push test container
         uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
           context: .
           file: "services/workbench2/docker/Dockerfile"
-          tags: workbench2-test:latest
-          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: false
-      - name: Run wb2 integration tests
+          push: true
+  doc-pysdk-api-fuse:
+    name: Doc PySDK API Fuse Tests
+    runs-on: ubuntu-latest
+    needs: build-test-docker-image
+    if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # 3.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Run tests
         uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
         with:
-          image: workbench2-test:latest
-          options: -v ${{github.workspace}}:/usr/src/arvados -w /usr/src/arvados/services/workbench2
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          options: -v ${{ github.workspace }}:/usr/src/arvados -w /usr/src/arvados --privileged
           run: |
-            yarn install
-            yarn test --no-watchAll --bail --ci || exit $?
-            tools/run-integration-tests.sh -a /usr/src/arvados
+            pg_isready || pg_ctlcluster 13 main start && \
+            chgrp docker /var/run/docker.sock && \
+            su testuser -c 'WORKSPACE=$(pwd) build/run-tests.sh \
+              --temp /home/testuser/tmp \
+              --only doc \
+              --only sdk/python \
+              --only services/api \
+              --only services/fuse \
+              sdks=python'
+  workbench2:
+    name: Workbench2 Tests
+    runs-on: ubuntu-latest
+    needs: build-test-docker-image
+    if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # 3.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Run tests
+        uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          options: -v ${{github.workspace}}:/usr/src/arvados -w /usr/src/arvados
+          run: |
+            pg_isready || pg_ctlcluster 13 main start && \
+            chgrp docker /var/run/docker.sock && \
+            su testuser -c 'WORKSPACE=$(pwd) build/run-tests.sh \
+              --temp /home/testuser/tmp \
+              --only services/workbench2'
+  remainder:
+    name: Remainder Tests
+    runs-on: ubuntu-latest
+    needs: build-test-docker-image
+    if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # 3.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Run tests
+        uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          options: -v ${{ github.workspace }}:/usr/src/arvados -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/arvados_docker_tmpdir:/tmp/arvados_docker_tmpdir -e TMPDIR=/tmp/arvados_docker_tmpdir -w /usr/src/arvados --privileged
+          run: |
+            pg_isready || pg_ctlcluster 13 main start && \
+            chgrp docker /var/run/docker.sock && \
+            chown testuser /tmp/arvados_docker_tmpdir && \
+            su testuser -c 'WORKSPACE=$(pwd) build/run-tests.sh \
+              --temp /home/testuser/tmp \
+              --skip cmd/arvados-package \
+              --skip doc \
+              --skip sdk/java-v2 \
+              --skip sdk/python \
+              --skip sdk/R \
+              --skip services/api \
+              --skip services/fuse \
+              --skip services/workbench2'
