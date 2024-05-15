@@ -146,6 +146,7 @@ jobs:
             pg_isready || pg_ctlcluster 13 main start && \
             useradd -m -s /bin/bash nonroot && \
             usermod -aG sudo nonroot && \
+            usermod -aG docker nonroot && \
             su nonroot -c 'WORKSPACE=$(pwd) build/run-tests.sh \
               --skip cmd/arvados-package \
               --skip doc \
