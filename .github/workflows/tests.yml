@@ -147,7 +147,7 @@ jobs:
             useradd -m -s /bin/bash nonroot && \
             usermod -aG sudo nonroot && \
             usermod -aG docker nonroot && \
-            chgrp docker /var/run/docker.sock \
+            chgrp docker /var/run/docker.sock && \
             su nonroot -c 'echo $(whoami) && echo $(groups) && echo $(ls -l /var/run/docker.sock) && echo $(docker images) && \
               WORKSPACE=$(pwd) build/run-tests.sh \
               --only lib/controller'
