@@ -149,7 +149,7 @@ jobs:
             usermod -aG docker nonroot && \
             su nonroot -c 'echo $(whoami) && echo $(groups) && echo $(ls -l /var/run/docker.sock) && echo $(docker images) && \
               WORKSPACE=$(pwd) build/run-tests.sh \
-              --only lib/controller
+              --only lib/controller'
           # --skip cmd/arvados-package \
           # --skip doc \
           # --skip sdk/java-v2 \
