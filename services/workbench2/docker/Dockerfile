@@ -29,11 +29,21 @@ RUN cd /usr/src/arvados && \
     ln -s /usr/local/bin/go-${GO_VERSION} /usr/local/bin/go && \
     ln -s /usr/local/bin/gofmt-${GO_VERSION} /usr/local/bin/gofmt
 
+# Set up sudo & docker enabled user
+RUN useradd -m -s /bin/bash testuser && \
+    usermod -aG sudo testuser && \
+    usermod -aG docker testuser
+
 # preseed arvados build dependencies
 RUN cd /usr/src/arvados && \
     apt-get update && \
-    go mod download && \
-    go run ./cmd/arvados-server install -type test && cd .. && \
+    su testuser -c 'go mod download && \
+        go run ./cmd/arvados-server install -type test && \
+        mkdir $HOME/tmp && \
+        WORKSPACE=$(pwd) ./build/run-tests.sh \
+            --temp $HOME/tmp \
+            --only install' && \
+    cd .. && \
     rm -rf arvados && \
     apt-get clean
 
