@@ -43,6 +43,7 @@ RUN useradd -m -s /bin/bash testuser && \
 
 # preseed arvados test dependencies
 RUN cd /usr/src/arvados && \
+    mkdir tmp && chown testuser tmp && \
     su testuser -c 'mkdir /home/testuser/tmp && \
         WORKSPACE=$(pwd) ./build/run-tests.sh \
         --temp /home/testuser/tmp \
