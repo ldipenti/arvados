@@ -43,9 +43,9 @@ RUN useradd -m -s /bin/bash testuser && \
 
 # preseed arvados test dependencies
 RUN cd /usr/src/arvados && \
-    su testuser -c 'mkdir $HOME/tmp && \
+    su testuser -c 'mkdir /home/testuser/tmp && \
         WORKSPACE=$(pwd) ./build/run-tests.sh \
-        --temp $HOME/tmp \
+        --temp /home/testuser/tmp \
         --only install' && \
     cd .. && \
     rm -rf arvados
