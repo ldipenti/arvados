@@ -47,7 +47,7 @@ RUN cd /usr/src/arvados && \
     su testuser -c 'mkdir -p /home/testuser/tmp && \
         WORKSPACE=$(pwd) ./build/run-tests.sh \
         --temp /home/testuser/tmp \
-        --only-install' && \
+        --only install' && \
     cd .. && \
     rm -rf arvados
 
