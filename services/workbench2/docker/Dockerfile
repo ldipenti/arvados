@@ -43,6 +43,7 @@ RUN useradd -m -s /bin/bash testuser && \
 
 # preseed arvados test dependencies
 RUN cd /usr/src/arvados && \
+    pg_isready || pg_ctlcluster 13 main start && \
     mkdir -p tmp && chown -R testuser . && \
     su testuser -c 'mkdir -p /home/testuser/tmp && \
         WORKSPACE=$(pwd) ./build/run-tests.sh \
