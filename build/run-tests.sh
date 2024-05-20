@@ -574,6 +574,7 @@ install_env() {
     # match our package build environment.
     # We run `setup.py build` first to generate _version.py.
     pip install parameterized pytest PyYAML pdoc wheel \
+        && env -C "$WORKSPACE/sdk/python" python3 arvados_version.py \
         && env -C "$WORKSPACE/sdk/python" python3 setup.py build \
         && pip install "$WORKSPACE/sdk/python" \
         || fatal "installing Python SDK and related dependencies failed"
