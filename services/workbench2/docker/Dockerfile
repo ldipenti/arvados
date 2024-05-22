@@ -41,6 +41,9 @@ RUN useradd -m -s /bin/bash testuser && \
     usermod -aG sudo testuser && \
     usermod -aG docker testuser
 
+# Fix IPv6 localhost resolution
+RUN sudo bash -c "echo -e '\n::1     localhost ip6-localhost ip6-loopback' >> /etc/hosts"
+
 # preseed arvados test dependencies
 RUN cd /usr/src/arvados && \
     pg_isready || pg_ctlcluster 13 main start && \
