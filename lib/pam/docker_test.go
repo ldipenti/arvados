@@ -122,7 +122,7 @@ func (s *DockerSuite) runTestClient(c *check.C, args ...string) (stdout, stderr 
 		"-v", s.tmpdir+"/conffile:/usr/share/pam-configs/arvados:ro",
 		"-v", s.tmpdir+"/testclient:/testclient:ro",
 		"debian:bullseye",
-		"ls", "-lh", "/")
+		"ls", "-lh", "/testclient/")
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	err = cmd.Run()
