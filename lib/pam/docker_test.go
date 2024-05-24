@@ -72,11 +72,17 @@ func (s *DockerSuite) SetUpSuite(c *check.C) {
 	// Build the testclient program that will (from inside the
 	// docker container) configure the system to use the above PAM
 	// config, and then try authentication.
-	cmd = exec.Command("go", "build", "-o", "./testclient", "./testclient.go")
+	cmd = exec.Command("go", "build", "-o", s.tmpdir+"/testclient", "./testclient.go")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	c.Assert(err, check.IsNil)
+
+	cmd = exec.Command("ls", "-lh", s.tmpdir)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	c.Assert(err, check.NotNil)
 }
 
 func (s *DockerSuite) TearDownSuite(c *check.C) {
@@ -113,7 +119,7 @@ func (s *DockerSuite) runTestClient(c *check.C, args ...string) (stdout, stderr 
 		"--add-host", "zzzzz.arvadosapi.com:" + s.hostip,
 		"-v", s.tmpdir + "/pam_arvados.so:/usr/lib/pam_arvados.so:ro",
 		"-v", s.tmpdir + "/conffile:/usr/share/pam-configs/arvados:ro",
-		"-v", "./testclient:/testclient:ro",
+		"-v", s.tmpdir + "/testclient:/testclient:ro",
 		"debian:bullseye",
 		"/testclient"}, args...)...)
 	stdout = &bytes.Buffer{}
