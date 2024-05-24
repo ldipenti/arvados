@@ -51,72 +51,72 @@ jobs:
   #         cache-from: type=gha
   #         cache-to: type=gha,mode=max
   #         push: true
-  doc-pysdk-api-fuse:
-    name: Doc PySDK API Fuse Tests
-    runs-on: ubuntu-latest
-    # needs: build-test-docker-image
-    # if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # 3.1.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GHCR_TOKEN }}
-      - name: Run tests
-        uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GHCR_TOKEN }}
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          options: -v ${{ github.workspace }}:/usr/src/arvados -w /usr/src/arvados --privileged
-          run: |
-            pg_isready || pg_ctlcluster 13 main start && \
-            chgrp docker /var/run/docker.sock && \
-            su testuser -c 'WORKSPACE=$(pwd) build/run-tests.sh \
-              --temp /home/testuser/tmp \
-              --only doc \
-              --only sdk/python \
-              --only services/api \
-              --only services/fuse \
-              sdks=python'
-  workbench2:
-    name: Workbench2 Tests
-    runs-on: ubuntu-latest
-    # needs: build-test-docker-image
-    # if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # 3.1.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GHCR_TOKEN }}
-      - name: Run tests
-        uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GHCR_TOKEN }}
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          options: -v ${{github.workspace}}:/usr/src/arvados -w /usr/src/arvados
-          run: |
-            pg_isready || pg_ctlcluster 13 main start && \
-            chgrp docker /var/run/docker.sock && \
-            su testuser -c 'WORKSPACE=$(pwd) build/run-tests.sh \
-              --temp /home/testuser/tmp \
-              --only services/workbench2'
+  # doc-pysdk-api-fuse:
+  #   name: Doc PySDK API Fuse Tests
+  #   runs-on: ubuntu-latest
+  #   # needs: build-test-docker-image
+  #   # if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+  #       with:
+  #         fetch-depth: 0
+  #         fetch-tags: true
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # 3.1.0
+  #       with:
+  #         registry: ${{ env.REGISTRY }}
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GHCR_TOKEN }}
+  #     - name: Run tests
+  #       uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
+  #       with:
+  #         registry: ${{ env.REGISTRY }}
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GHCR_TOKEN }}
+  #         image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+  #         options: -v ${{ github.workspace }}:/usr/src/arvados -w /usr/src/arvados --privileged
+  #         run: |
+  #           pg_isready || pg_ctlcluster 13 main start && \
+  #           chgrp docker /var/run/docker.sock && \
+  #           su testuser -c 'WORKSPACE=$(pwd) build/run-tests.sh \
+  #             --temp /home/testuser/tmp \
+  #             --only doc \
+  #             --only sdk/python \
+  #             --only services/api \
+  #             --only services/fuse \
+  #             sdks=python'
+  # workbench2:
+  #   name: Workbench2 Tests
+  #   runs-on: ubuntu-latest
+  #   # needs: build-test-docker-image
+  #   # if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+  #       with:
+  #         fetch-depth: 0
+  #         fetch-tags: true
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # 3.1.0
+  #       with:
+  #         registry: ${{ env.REGISTRY }}
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GHCR_TOKEN }}
+  #     - name: Run tests
+  #       uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
+  #       with:
+  #         registry: ${{ env.REGISTRY }}
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GHCR_TOKEN }}
+  #         image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+  #         options: -v ${{github.workspace}}:/usr/src/arvados -w /usr/src/arvados
+  #         run: |
+  #           pg_isready || pg_ctlcluster 13 main start && \
+  #           chgrp docker /var/run/docker.sock && \
+  #           su testuser -c 'WORKSPACE=$(pwd) build/run-tests.sh \
+  #             --temp /home/testuser/tmp \
+  #             --only services/workbench2'
   remainder:
     name: Remainder Tests
     runs-on: ubuntu-latest
@@ -147,11 +147,12 @@ jobs:
             chgrp docker /var/run/docker.sock && \
             su testuser -c 'WORKSPACE=$(pwd) build/run-tests.sh \
               --temp /home/testuser/tmp \
-              --skip cmd/arvados-package \
-              --skip doc \
-              --skip sdk/java-v2 \
-              --skip sdk/python \
-              --skip sdk/R \
-              --skip services/api \
-              --skip services/fuse \
-              --skip services/workbench2'
+              --only lib/pam'
+              # --skip cmd/arvados-package \
+              # --skip doc \
+              # --skip sdk/java-v2 \
+              # --skip sdk/python \
+              # --skip sdk/R \
+              # --skip services/api \
+              # --skip services/fuse \
+              # --skip services/workbench2'

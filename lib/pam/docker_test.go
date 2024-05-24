@@ -72,7 +72,7 @@ func (s *DockerSuite) SetUpSuite(c *check.C) {
 	// Build the testclient program that will (from inside the
 	// docker container) configure the system to use the above PAM
 	// config, and then try authentication.
-	cmd = exec.Command("go", "build", "./testclient.go")
+	cmd = exec.Command("go", "build", "-o", "/testclient", "./testclient.go")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
