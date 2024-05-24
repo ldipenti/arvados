@@ -77,12 +77,6 @@ func (s *DockerSuite) SetUpSuite(c *check.C) {
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	c.Assert(err, check.IsNil)
-
-	cmd = exec.Command("ls", "-lh", s.tmpdir)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	c.Assert(err, check.NotNil)
 }
 
 func (s *DockerSuite) TearDownSuite(c *check.C) {
@@ -112,8 +106,29 @@ Auth-Initial:
 }
 
 func (s *DockerSuite) runTestClient(c *check.C, args ...string) (stdout, stderr *bytes.Buffer, err error) {
+	stdout = &bytes.Buffer{}
+	stderr = &bytes.Buffer{}
 
-	cmd := exec.Command("docker", append([]string{
+	cmd := exec.Command("ls", "-lh", s.tmpdir)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	err = cmd.Run()
+	c.Check(err, check.NotNil)
+
+	cmd = exec.Command("docker", "run", "--rm",
+		"--hostname", "testvm2.shell",
+		"--add-host", "zzzzz.arvadosapi.com:"+s.hostip,
+		"-v", s.tmpdir+"/pam_arvados.so:/usr/lib/pam_arvados.so:ro",
+		"-v", s.tmpdir+"/conffile:/usr/share/pam-configs/arvados:ro",
+		"-v", s.tmpdir+"/testclient:/testclient:ro",
+		"debian:bullseye",
+		"ls", "-lh", "/")
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	err = cmd.Run()
+	c.Check(err, check.NotNil)
+
+	cmd = exec.Command("docker", append([]string{
 		"run", "--rm",
 		"--hostname", "testvm2.shell",
 		"--add-host", "zzzzz.arvadosapi.com:" + s.hostip,
@@ -122,8 +137,6 @@ func (s *DockerSuite) runTestClient(c *check.C, args ...string) (stdout, stderr 
 		"-v", s.tmpdir + "/testclient:/testclient:ro",
 		"debian:bullseye",
 		"/testclient"}, args...)...)
-	stdout = &bytes.Buffer{}
-	stderr = &bytes.Buffer{}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	err = cmd.Run()
