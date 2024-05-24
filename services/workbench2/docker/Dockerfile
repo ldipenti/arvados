@@ -41,8 +41,8 @@ RUN useradd -m -s /bin/bash testuser && \
     usermod -aG sudo testuser && \
     usermod -aG docker testuser
 
-# Fix IPv6 localhost resolution
-RUN sudo bash -c "echo -e '\n::1     localhost ip6-localhost ip6-loopback' >> /etc/hosts"
+# Make sure user_allow_other is set in fuse.conf
+RUN sed -i 's/#user_allow_other/user_allow_other/g' /etc/fuse.conf
 
 # preseed arvados test dependencies
 RUN cd /usr/src/arvados && \
