@@ -16,7 +16,6 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
-	"time"
 
 	"git.arvados.org/arvados.git/sdk/go/arvadostest"
 	"gopkg.in/check.v1"
@@ -24,7 +23,6 @@ import (
 
 type DockerSuite struct {
 	tmpdir   string
-	tmpvol   string
 	hostip   string
 	proxyln  net.Listener
 	proxysrv *http.Server
@@ -41,15 +39,14 @@ func (s *DockerSuite) SetUpSuite(c *check.C) {
 		c.Skip("skipping docker tests because docker is not available")
 	}
 
-	s.tmpdir = c.MkDir()
-
-	// Set up volume container to share binaries with tests
-	s.tmpvol = fmt.Sprintf("docker-test-%d", time.Now().Unix())
-	cmd := exec.Command("docker", "volume", "create", s.tmpvol)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	c.Assert(err, check.IsNil)
+	// If being run inside Docker, we need the host tmpdir path to be able to
+	// mount it on inner docker containers.
+	value, exists := os.LookupEnv("HOST_TMPDIR")
+	if exists {
+		s.tmpdir = value
+	} else {
+		s.tmpdir = c.MkDir()
+	}
 
 	// The integration-testing controller listens on the loopback
 	// interface, so it won't be reachable directly from the
@@ -72,7 +69,7 @@ func (s *DockerSuite) SetUpSuite(c *check.C) {
 
 	// Build a pam module to install & configure in the docker
 	// container.
-	cmd = exec.Command("go", "build", "-buildmode=c-shared", "-o", s.tmpdir+"/pam_arvados.so")
+	cmd := exec.Command("go", "build", "-buildmode=c-shared", "-o", s.tmpdir+"/pam_arvados.so")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
@@ -86,17 +83,6 @@ func (s *DockerSuite) SetUpSuite(c *check.C) {
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	c.Assert(err, check.IsNil)
-
-	// Stage binaries into volume container so they're available even to
-	// docker-in-docker containers.
-	files := []string{s.tmpdir + "/pam_arvados.so", s.tmpdir + "/testclient"}
-	for i := 0; i < len(files); i++ {
-		cmd = exec.Command("docker", "cp", files[i], s.tmpvol+":/")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
-		c.Assert(err, check.IsNil)
-	}
 }
 
 func (s *DockerSuite) TearDownSuite(c *check.C) {
@@ -106,11 +92,6 @@ func (s *DockerSuite) TearDownSuite(c *check.C) {
 	if s.proxyln != nil {
 		s.proxyln.Close()
 	}
-	cmd := exec.Command("docker", "volume", "rm", "-f", s.tmpvol)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	c.Assert(err, check.IsNil)
 }
 
 func (s *DockerSuite) SetUpTest(c *check.C) {
@@ -128,11 +109,6 @@ Auth-Initial:
 `, proxyhost, proxyhost)
 	err := os.WriteFile(s.tmpdir+"/conffile", []byte(confdata), 0755)
 	c.Assert(err, check.IsNil)
-	cmd := exec.Command("docker", "cp", s.tmpdir+"/conffile", s.tmpvol+":/")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	c.Assert(err, check.IsNil)
 }
 
 func (s *DockerSuite) runTestClient(c *check.C, args ...string) (stdout, stderr *bytes.Buffer, err error) {
@@ -140,9 +116,9 @@ func (s *DockerSuite) runTestClient(c *check.C, args ...string) (stdout, stderr 
 		"run", "--rm",
 		"--hostname", "testvm2.shell",
 		"--add-host", "zzzzz.arvadosapi.com:" + s.hostip,
-		"-v", s.tmpvol + ":/pam_arvados.so:/usr/lib/pam_arvados.so:ro",
-		"-v", s.tmpvol + ":/conffile:/usr/share/pam-configs/arvados:ro",
-		"-v", s.tmpvol + ":/testclient:/testclient:ro",
+		"-v", s.tmpdir + "/pam_arvados.so:/usr/lib/pam_arvados.so:ro",
+		"-v", s.tmpdir + "/conffile:/usr/share/pam-configs/arvados:ro",
+		"-v", s.tmpdir + "/testclient:/testclient:ro",
 		"debian:bullseye",
 		"/testclient"}, args...)...)
 	stdout = &bytes.Buffer{}
@@ -193,10 +169,6 @@ Auth-Initial:
 `, s.proxyln.Addr().String(), s.proxyln.Addr().String())
 	err := os.WriteFile(s.tmpdir+"/conffile", []byte(confdata), 0755)
 	c.Assert(err, check.IsNil)
-	cmd := exec.Command("docker", "cp", s.tmpdir+"/conffile", s.tmpvol+":/")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
 
 	stdout, stderr, err := s.runTestClient(c, "try", "active", arvadostest.ActiveTokenV2)
 	c.Check(err, check.IsNil)
