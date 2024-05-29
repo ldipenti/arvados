@@ -148,12 +148,11 @@ jobs:
             chown testuser /tmp/arvados_docker_tmpdir && \
             su testuser -c 'WORKSPACE=$(pwd) build/run-tests.sh \
               --temp /home/testuser/tmp \
-              --only lib/pam'
-              # --skip cmd/arvados-package \
-              # --skip doc \
-              # --skip sdk/java-v2 \
-              # --skip sdk/python \
-              # --skip sdk/R \
-              # --skip services/api \
-              # --skip services/fuse \
-              # --skip services/workbench2'
+              --skip cmd/arvados-package \
+              --skip doc \
+              --skip sdk/java-v2 \
+              --skip sdk/python \
+              --skip sdk/R \
+              --skip services/api \
+              --skip services/fuse \
+              --skip services/workbench2'
