@@ -145,6 +145,7 @@ jobs:
           run: |
             pg_isready || pg_ctlcluster 13 main start && \
             chgrp docker /var/run/docker.sock && \
+            chown testuser /tmp/arvados_docker_tmpdir && \
             su testuser -c 'WORKSPACE=$(pwd) build/run-tests.sh \
               --temp /home/testuser/tmp \
               --only lib/pam'
