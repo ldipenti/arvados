@@ -39,14 +39,7 @@ func (s *DockerSuite) SetUpSuite(c *check.C) {
 		c.Skip("skipping docker tests because docker is not available")
 	}
 
-	// If being run inside Docker, we need the host tmpdir path to be able to
-	// mount it on inner docker containers.
-	value, exists := os.LookupEnv("HOST_TMPDIR")
-	if exists {
-		s.tmpdir = value
-	} else {
-		s.tmpdir = c.MkDir()
-	}
+	s.tmpdir = c.MkDir()
 
 	// The integration-testing controller listens on the loopback
 	// interface, so it won't be reachable directly from the

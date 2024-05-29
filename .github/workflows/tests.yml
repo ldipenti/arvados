@@ -141,7 +141,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_TOKEN }}
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          options: -v ${{ github.workspace }}:/usr/src/arvados -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/arvados_docker_tmpdir:/tmp/arvados_docker_tmpdir -e HOST_TMPDIR=/tmp/arvados_docker_tmpdir -w /usr/src/arvados --privileged
+          options: -v ${{ github.workspace }}:/usr/src/arvados -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/arvados_docker_tmpdir:/tmp/arvados_docker_tmpdir -e TMPDIR=/tmp/arvados_docker_tmpdir -w /usr/src/arvados --privileged
           run: |
             pg_isready || pg_ctlcluster 13 main start && \
             chgrp docker /var/run/docker.sock && \
