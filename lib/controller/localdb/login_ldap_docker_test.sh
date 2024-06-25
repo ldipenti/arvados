@@ -22,7 +22,7 @@
 
 set -e -o pipefail
 
-debug=/dev/null
+debug=/dev/stderr
 if [[ -n ${ARVADOS_DEBUG} ]]; then
     debug=/dev/stderr
     set -x
@@ -68,6 +68,7 @@ ldaphostports=$(docker port ${ldapctr} 389/tcp)
 ldapport=${ldaphostports##*:}
 ldapurl="ldap://${hostname}:${ldapport}"
 passwordhash="$(docker exec -i ${ldapctr} slappasswd -s "secret")"
+echo >&2 "LDAP server URL is ${ldapurl}"
 
 # These are the default admin credentials for osixia/openldap:1.5.0
 adminuser=admin
