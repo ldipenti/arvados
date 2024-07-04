@@ -62,7 +62,7 @@ docker run --rm --detach \
        -p 0.0.0.0::389 \
        -p 0.0.0.0::636 \
        --name=${ldapctr} \
-       ${ldapimage}
+       ${ldapimage} --loglevel debug
 docker logs --follow ${ldapctr} 2>$debug >$debug &
 ldaphostports=$(docker port ${ldapctr} 389/tcp)
 ldapport=${ldaphostports##*:}
