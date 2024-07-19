@@ -203,4 +203,4 @@ packages-in-docker: check-arvados-directory workbench2-build-image
 
 workbench2-build-image:
 	docker inspect workbench2-build &> /dev/null || \
-		docker build -t workbench2-build -f docker/Dockerfile ${ARVADOS_DIRECTORY}
+		docker build -t workbench2-build -f ../../docker/run-tests/Dockerfile ${ARVADOS_DIRECTORY}
