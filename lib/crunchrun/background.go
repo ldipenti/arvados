@@ -78,7 +78,7 @@ func detach(uuid string, prog string, args []string, stdin io.Reader, stdout io.
 		// invoked as "/path/to/crunch-run"
 		execargs = append([]string{prog}, execargs...)
 	}
-	if _, err := exec.LookPath("systemd-cat"); err == nil {
+	if _, err := exec.Command("systemd-cat", "--identifier=crunch-run", "echo", "-n").CombinedOutput(); err == nil {
 		execargs = append([]string{
 			// Here, if the inner systemd-cat can't exec
 			// crunch-run, it writes an error message to
