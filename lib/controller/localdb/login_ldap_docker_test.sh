@@ -37,7 +37,7 @@ case "${config_method}" in
         ;;
 esac
 
-hostname="$(hostname)"
+dockerhost="$(docker info --format '{{.Name}}')"
 tmpdir="$(mktemp -d)"
 cleanup() {
     trap - ERR
@@ -66,7 +66,7 @@ docker run --rm --detach \
 docker logs --follow ${ldapctr} 2>$debug >$debug &
 ldaphostports=$(docker port ${ldapctr} 389/tcp)
 ldapport=${ldaphostports##*:}
-ldapurl="ldap://${hostname}:${ldapport}"
+ldapurl="ldap://${dockerhost}:${ldapport}"
 passwordhash="$(docker exec -i ${ldapctr} slappasswd -s "secret")"
 
 # These are the default admin credentials for osixia/openldap:1.5.0
@@ -79,7 +79,7 @@ Clusters:
     PostgreSQL:
       Connection:
         client_encoding: utf8
-        host: ${hostname}
+        host: $(hostname)
         port: "${pgport}"
         dbname: arvados_test
         user: arvados
