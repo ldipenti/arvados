@@ -97,9 +97,9 @@ Clusters:
     Services:
       RailsAPI:
         InternalURLs:
-          "https://${hostname}:${ARVADOS_TEST_API_HOST##*:}/": {}
+          "https://$(hostname):${ARVADOS_TEST_API_HOST##*:}/": {}
       Controller:
-        ExternalURL: http://0.0.0.0:9999/
+        ExternalURL: http://${dockerhost}:9999/
         InternalURLs:
           "http://0.0.0.0:9999/": {}
     SystemLogs:
@@ -219,7 +219,7 @@ ctrlport=${ctrlhostports##*:}
 
 echo >&2 "Waiting for arvados controller to come up..."
 for f in $(seq 1 20); do
-    if curl -s "http://0.0.0.0:${ctrlport}/arvados/v1/config" >/dev/null; then
+    if curl -s "http://${dockerhost}:${ctrlport}/arvados/v1/config" >/dev/null; then
         break
     else
         sleep 1
@@ -227,7 +227,7 @@ for f in $(seq 1 20); do
     echo -n >&2 .
 done
 echo >&2
-echo >&2 "Arvados controller is up at http://0.0.0.0:${ctrlport}"
+echo >&2 "Arvados controller is up at http://${dockerhost}:${ctrlport}"
 
 check_contains() {
     resp="${1}"
@@ -242,7 +242,7 @@ check_contains() {
 set +x
 
 echo >&2 "Testing authentication failure"
-resp="$(set -x; curl -s --include -d username=foo-bar -d password=nosecret "http://0.0.0.0:${ctrlport}/arvados/v1/users/authenticate" | tee $debug)"
+resp="$(set -x; curl -s --include -d username=foo-bar -d password=nosecret "http://${dockerhost}:${ctrlport}/arvados/v1/users/authenticate" | tee $debug)"
 check_contains "${resp}" "HTTP/1.1 401"
 if [[ "${config_method}" = ldap ]]; then
     check_contains "${resp}" '{"errors":["LDAP: Authentication failure (with username \"foo-bar\" and password)"]}'
@@ -252,13 +252,13 @@ fi
 
 if [[ "${config_method}" = pam ]]; then
     echo >&2 "Testing expired credentials"
-    resp="$(set -x; curl -s --include -d username=expired -d password=secret "http://0.0.0.0:${ctrlport}/arvados/v1/users/authenticate" | tee $debug)"
+    resp="$(set -x; curl -s --include -d username=expired -d password=secret "http://${dockerhost}:${ctrlport}/arvados/v1/users/authenticate" | tee $debug)"
     check_contains "${resp}" "HTTP/1.1 401"
     check_contains "${resp}" '{"errors":["PAM: Authentication token is no longer valid; new one required; \"You are required to change your password immediately (password expired).\""]}'
 fi
 
 echo >&2 "Testing authentication success"
-resp="$(set -x; curl -s --include -d username=foo-bar -d password=secret "http://0.0.0.0:${ctrlport}/arvados/v1/users/authenticate" | tee $debug)"
+resp="$(set -x; curl -s --include -d username=foo-bar -d password=secret "http://${dockerhost}:${ctrlport}/arvados/v1/users/authenticate" | tee $debug)"
 check_contains "${resp}" "HTTP/1.1 200"
 check_contains "${resp}" '"api_token":"'
 check_contains "${resp}" '"scopes":["all"]'
@@ -271,7 +271,7 @@ uuid="${uuid%%\"*}"
 token="v2/$uuid/$secret"
 echo >&2 "New token is ${token}"
 
-resp="$(set -x; curl -s --include -H "Authorization: Bearer ${token}" "http://0.0.0.0:${ctrlport}/arvados/v1/users/current" | tee $debug)"
+resp="$(set -x; curl -s --include -H "Authorization: Bearer ${token}" "http://${dockerhost}:${ctrlport}/arvados/v1/users/current" | tee $debug)"
 check_contains "${resp}" "HTTP/1.1 200"
 if [[ "${config_method}" = ldap ]]; then
     # user fields come from LDAP attributes
