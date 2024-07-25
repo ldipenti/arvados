@@ -79,7 +79,7 @@ Clusters:
     PostgreSQL:
       Connection:
         client_encoding: utf8
-        host: $(hostname)
+        host: $(hostname -i)
         port: "${pgport}"
         dbname: arvados_test
         user: arvados
@@ -97,7 +97,7 @@ Clusters:
     Services:
       RailsAPI:
         InternalURLs:
-          "https://$(hostname):${ARVADOS_TEST_API_HOST##*:}/": {}
+          "https://$(hostname -i):${ARVADOS_TEST_API_HOST##*:}/": {}
       Controller:
         ExternalURL: http://${dockerhost}:9999/
         InternalURLs:
