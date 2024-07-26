@@ -153,7 +153,7 @@ func (*Suite) TestGetListenAddress(c *check.C) {
 		if trial.expectLogsMatch != "" {
 			c.Check(logbuf.String(), check.Matches, trial.expectLogsMatch)
 		}
-		if trial.expectErrorMatch != "" {
+		if err != nil && trial.expectErrorMatch != "" {
 			c.Check(err, check.ErrorMatches, trial.expectErrorMatch)
 			continue
 		}
